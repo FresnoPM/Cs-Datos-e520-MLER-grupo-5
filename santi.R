@@ -1,11 +1,12 @@
-#voy a trarme los datos de la base de datos del MLER:
 library(readr)
 library(tidyverse)
 library(igraph)
 library(ggraph)
 install.packages("ggraph")
-mler <- read_csv("dataset/MLER.csv")
-mler
+
+#voy a trarme los datos de la base de datos del MLER:
+#mler <- read_csv("dataset/MLER.csv")
+#mler
 
 
 # Prototipo de grafo ------------------------------------------------------
