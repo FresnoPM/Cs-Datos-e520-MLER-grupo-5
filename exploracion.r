@@ -22,7 +22,7 @@ transicion_letra <- transicion_letra %>% mutate(
     interpretacion = case_when(
         sig_letra == 99 & intervalo == 99 ~ "sale del sistema definitivamente",
         letra != sig_letra & intervalo != 99 ~ paste("sale del sistema por ", intervalo, " meses y cambia de letra"),
-        letra == sig_letra & intervalo == 1 ~ "continua",
+        letra == sig_letra & intervalo == 1 ~ "continúa en la misma letra",
         letra == sig_letra & intervalo != 1 ~ paste("sale del sistema por ", intervalo, " meses pero vuelve a la misma letra"),
         letra != sig_letra & intervalo == 1 ~ "transiciona de letra inmediatamente"
     )
