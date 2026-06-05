@@ -2,10 +2,10 @@ library(readr)
 library(tidyverse)
 library(igraph)
 library(ggraph)
-install.packages("ggraph")
+#install.packages("tidyverse")
 
 #voy a trarme los datos de la base de datos del MLER:
-#mler <- read_csv("dataset/MLER.csv")
+#mler <- read_csv("./materiales/MLER.csv")
 #mler
 
 
@@ -38,7 +38,9 @@ mi_grafo <- graph_from_data_frame(d = aristas, vertices = nodos, directed = TRUE
 ggraph(mi_grafo, layout = 'fr') +  # 'fr' (Fruchterman-Reingold) es un algoritmo para que los nodos no se superpongan
 
     # Dibujamos las flechas (aristas) con grosor dependiente del 'peso'
-    geom_edge_link(aes(width = peso), alpha = 0.4, arrow = arrow(length = unit(3, 'mm'))) +
+    geom_edge_link(aes(width = peso),
+                   #alpha = 0.4,
+                   arrow = arrow(length = unit(3, 'mm'))) +
 
     # Dibujamos los nodos con tamaño por 'trabajadores' y color por 'ingreso'
     geom_node_point(aes(size = trabajadores, color = ingreso_promedio)) +
