@@ -73,3 +73,39 @@ transicion_letra_volver <- transicion_letra_volver %>% mutate(interpretacion = c
 )
 )
 
+
+
+
+##########################################
+##########################################
+###### REMUNERACION ANUAL POR LETRA ######
+##########################################
+##########################################
+##########################################
+
+rem_por_anio_mujer <- df_mujer %>% select(tiempo, letra, r34, rem_tot, edad)%>%
+    dplyr::filter( letra  != as.numeric(0) , rem_tot != as.numeric(0) ) %>%
+    mutate(anio = year(tiempo)) %>%
+    summarise(
+        .by = c(anio, letra),
+        media = mean(rem_tot, na.rm = TRUE),
+        median = median(rem_tot, na.rm = TRUE),
+        min = min(rem_tot, na.rm = TRUE),
+        max = max(rem_tot, na.rm = TRUE),
+        #.groups = "drop_last"
+    ) %>% ungroup() %>% arrange(letra, anio)
+
+
+salario_por_anio_hombre <- df_hombre %>% select(tiempo, letra, r34, rem_tot, edad)%>%
+    dplyr::filter( letra  != as.numeric(0) , rem_tot != as.numeric(0) ) %>%
+    mutate(anio = year(tiempo)) %>%
+    summarise(
+        .by = c(anio, letra),
+        media = mean(rem_tot, na.rm = TRUE),
+        median = median(rem_tot, na.rm = TRUE),
+        min = min(rem_tot, na.rm = TRUE),
+        max = max(rem_tot, na.rm = TRUE),
+        #.groups = "drop_last"
+    ) %>% ungroup() %>% arrange(letra, anio)
+View(salario_por_anio_hombre)
+
