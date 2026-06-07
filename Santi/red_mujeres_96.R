@@ -107,7 +107,8 @@ grafo_mujeres <- graph_from_data_frame(d = aristas_finales, vertices = nodos, di
 ggraph(grafo_mujeres, layout = 'fr') +
     geom_edge_link(aes(width = peso), alpha = 0.5, arrow = arrow(length = unit(4, 'mm'))) +
     geom_node_point(aes(size = trabajadores, color = ingreso_promedio)) +
-    geom_node_text(aes(label = name), vjust = 2, size = 3) +
+#    geom_node_text(aes(label = name), vjust = 2, size = 3) +
+    geom_node_text(aes(label = descripcion), vjust = 2, size = 3) +
     scale_edge_width(range = c(0.5, 3), name = "Flujo Neto") +
     scale_color_viridis_c(option = "magma", name = "Salario Promedio") +
     scale_size_continuous(range = c(3, 12), name = "Total Mujeres") +
