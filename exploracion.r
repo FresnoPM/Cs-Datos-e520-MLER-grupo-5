@@ -39,7 +39,6 @@ transicion_letra_volver <- rbind(transicion_letra, uncount(
         mutate (
             id_relacion = 999,
             letra = 999,
-            # sig_letra = dplyr::lead(letra, default = 0),
             r32 = 999,
             r34 = 999,
             edad = round(as.numeric(edad)+(as.numeric(intervalo)/12), digits = 0),
