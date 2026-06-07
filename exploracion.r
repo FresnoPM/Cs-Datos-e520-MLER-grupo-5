@@ -108,3 +108,17 @@ salario_por_anio_hombre <- df_hombre %>% select(tiempo, letra, r34, rem_tot, eda
     ) %>% ungroup() %>% arrange(letra, anio)
 View(salario_por_anio_hombre)
 
+
+
+##########################################
+##########################################
+### RELACION ENTRE LETRAS Y R32 O R34 ####
+##########################################
+##########################################
+
+df_mujer_real %>% select(letra, r32, r34) %>%
+    summarise(unique_letra = n_distinct(letra), .by = r3) %>% arrange(desc(unique_letra))
+
+df_mujer_real %>% select(letra, r32, r34) %>%
+    summarise(unique_r32 = n_distinct(r32), .by = r34) %>% arrange(desc(unique_r32))
+
