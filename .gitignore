@@ -8,3 +8,4 @@ materiales/MANUAL DE LA MUESTRA LONGITUDINAL DE EMPLEO REGISTRADO.pdf
 .RData
 *.rds
 prueba*
+*.parquet
