@@ -11,12 +11,38 @@ library(ggraph)
 # =======================================================
 
 # Abrir el CSV en disco sin cargarlo a la RAM
-#dataset_csv <- open_dataset("dataset/MLER.csv", format = "csv")
+#dataset_csv <- open_dataset("../materiales/MLER.csv", format = "csv")
 
 # Escribir directamente a Parquet de forma ultra rápida
-#write_parquet(dataset_csv, "dataset/MLER.parquet")
+#write_parquet(dataset_csv, "../materiales/MLER.parquet")
 
-ds <- open_dataset("./dataset/MLER.parquet")
+ds <- open_dataset("../materiales/MLER.parquet")
+
+library(readxl)
+library(purrr)
+
+path_descriptores <- "./materiales/anexo_estadistico_y_descriptores.xlsx"
+
+descriptores <- path %>%
+    excel_sheets() %>%
+    set_names() %>%
+    map(~ read_excel(path = path_descriptores, sheet = .x))
+
+library(janitor)
+desc_letra <- descriptores[["DESC_LETRA"]] %>%
+    select(1,3,4) %>%
+    row_to_names(row_number = 2) %>%
+    rename( letra = 1, descripcion = 2, sexualizacion = 3)
+
+desc_r32 <- descriptores[["DESC_R32"]] %>%
+    row_to_names(row_number = 2) %>%
+    rename(descripcion = 2)
+
+desc_r34 <- descriptores[["DESC_R34"]] %>%
+    row_to_names(row_number = 2) %>%
+    rename(descripcion = 2)
+
+
 
 # =======================================================
 # PASO 0: Filtrar la base (Ejemplo: Mujeres, Año 1996)
@@ -39,7 +65,12 @@ nodos <- df_mujeres_96 %>%
         trabajadores = n_distinct(id_trabajador),
         ingreso_promedio = mean(rem_tot, na.rm = TRUE)
     ) %>%
-    rename(name = r32)
+    mutate(
+        descripcion = desc_r32$descripcion[ match(r32, desc_r32$r32) ]
+    ) %>%
+    rename(name = r32) %>%
+    ungroup()
+
 
 # =======================================================
 # PASO 2: Armar las ARISTAS (Flujos Netos)
