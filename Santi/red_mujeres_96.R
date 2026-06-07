@@ -42,7 +42,9 @@ desc_r34 <- descriptores[["DESC_R34"]] %>%
     row_to_names(row_number = 2) %>%
     rename(descripcion = 2)
 
-
+# saveRDS(desc_letra, file = "./materiales/desc_letra.rds")
+# saveRDS(desc_r32, file = "./materiales/desc_r32.rds")
+# saveRDS(desc_r34, file = "./materiales/desc_r34.rds")
 
 # =======================================================
 # PASO 0: Filtrar la base (Ejemplo: Mujeres, Año 1996)
