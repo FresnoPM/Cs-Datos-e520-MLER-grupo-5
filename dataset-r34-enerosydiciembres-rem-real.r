@@ -2,13 +2,12 @@ library(dplyr)
 library(tidyr)
 library(lubridate)
 df_original <- readRDS("./materiales/df_mujer_real.rds")
-id_seleccionadas <- c(201796, 442849)
+
+
 
 df_original <- df_original %>%
-    filter(.$id_trabajador %in% id_seleccionadas) %>%
     select(id_trabajador, tiempo, r34) %>%
-    group_by(id_trabajador, r34) %>% # [ grupos]
-    # add_count(id_trabajador,r34) %>%
+    group_by(id_trabajador, r34) %>%
     arrange(desc(id_trabajador), tiempo) %>%
     ungroup() %>%
     mutate(
@@ -25,7 +24,7 @@ identifico_intervalos <- function(df) {
     fin_index <- inicio_index + 1
 
     inicio_df  <- df %>%
-        select(id_trabajador, tiempo) %>%
+        select(id_trabajador, tiempo, intervalo) %>%
         slice(inicio_index) %>%
         rename(inicio = tiempo)
 
@@ -40,52 +39,47 @@ identifico_intervalos <- function(df) {
 }
 inicio_fin <- identifico_intervalos(df_original)
 
-calculo_nuevos_nodos <- function(df) {
-    new_rows <- data.frame(id_trabajador = numeric() ,
-                           tiempo = Date(),
-                           r34 = numeric())
-    for (i in 1:nrow(df)) {
-        id_trabajador <- df[i, "id_trabajador"][[1]]
-        inicio <- as.Date(df[i, "inicio"][[1]])
-        fin <- as.Date(df[i, "fin"][[1]])
-        enero <- update(
-            inicio,
-            year = year(inicio) + 1,
-            month = 1,
-            day = 1
+calculo_eneros <- function(inicio, intervalo, id_trabajador, fin) {
+    start_time <- Sys.time()
+    enero = update(    inicio, year = year(inicio) + 1, month = 1, day = 1 )
+    a <- tibble(
+        id_trabajador = numeric(),
+        enero = Date(),
+        r34 = numeric()
+    )
+    while (fin>enero) {
+        a <- a %>% add_row (
+            id_trabajador = id_trabajador,
+            enero = enero,
+            r34 = 999
         )
 
-        while (fin > enero) {
-            new_item <- data.frame(
-                id_trabajador = id_trabajador,
-                tiempo = enero,
-                r34 = 999
-            )
-            new_rows <- new_rows %>% add_row (new_item)
-            enero = ymd(enero) %m+% years(1)
-        }
 
-        diciembre <- update(
-            inicio,
-            year = year(inicio) + 1,
-            month = 12,
-            day = 1
-        )
-        while (fin > diciembre) {
-            new_item <- data.frame(
-                id_trabajador = id_trabajador,
-                tiempo = diciembre,
-                r34 = 999
-            )
-            new_rows <- new_rows %>% add_row (new_item)
-            diciembre = ymd(diciembre) %m+% years(1)
-        }
-        #
+        enero = ymd(enero) %m+% years(1)
     }
-    return(new_rows)
+    return(a)
 }
 
-nuevos_nodos <- calculo_nuevos_nodos(inicio_fin)
+# seleccion1 <- inicio_fin %>% slice(1:50000)
+# eneros1 <- pmap_dfr(seleccion1, calculo_eneros)
+# seleccion2 <- inicio_fin %>% slice(50001:100000)
+# eneros2 <- pmap_dfr(seleccion2, calculo_eneros)
+# seleccion3 <- inicio_fin %>% slice(100001:150000)
+# eneros3 <- pmap_dfr(seleccion3, calculo_eneros)
+# seleccion4 <- inicio_fin %>% slice(150001:200000)
+# eneros4 <- pmap_dfr(seleccion4, calculo_eneros)
+# seleccion5 <- inicio_fin %>% slice(200001:250000)
+# eneros5 <- pmap_dfr(seleccion5, calculo_eneros)
+# seleccion6 <- inicio_fin %>% slice(250001:300000)
+# eneros6 <- pmap_dfr(seleccion6, calculo_eneros)
+# seleccion7 <- inicio_fin %>% slice(300001:311276)
+# eneros7 <- pmap_dfr(seleccion7, calculo_eneros)
+
+library(data.table)
+eneros_list <- list(eneros1, eneros2, eneros3, eneros4, eneros5, eneros6, eneros7)
+nuevos_nodos <- rbindlist(eneros_list, fill = TRUE)
+diciembres_list <- list()
+
 
 df_con_nuevos_nodos <- bind_rows(df_original %>% select(-intervalo)
                                  , nuevos_nodos) %>% arrange(id_trabajador, tiempo)
