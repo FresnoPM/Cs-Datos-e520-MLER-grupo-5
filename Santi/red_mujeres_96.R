@@ -4,7 +4,7 @@ install.packages("arrow")
 library(arrow)
 library(igraph)
 library(ggraph)
-
+library(lubridate)
 
 # =======================================================
 # PASO PREVIO: Conexión al dataset en disco
@@ -17,43 +17,35 @@ library(ggraph)
 # Escribir directamente a Parquet de forma ultra rápida
 #write_parquet(dataset_csv, "dataset/MLER.parquet")
 
-ds <- open_dataset("./dataset/MLER.parquet")
-
-#dataset_csv <- open_dataset("../materiales/MLER.csv", format = "csv")
-
-# Escribir directamente a Parquet de forma ultra rápida
-#write_parquet(dataset_csv, "../materiales/MLER.parquet")
-
-ds <- open_dataset("../materiales/MLER.parquet")
-
+# ds <- open_dataset("./dataset/MLER.parquet")
+# ds <- open_dataset("./materiales/edges_hombres.parquet")
+ds <- open_dataset("./materiales/edges_mujeres.parquet")
+head(ds)
+df <- readRDS("./materiales/edges_mujeres.rds")
 # =======================================================
 # PASO 0: Filtrar la base (Ejemplo: Mujeres, Año 1996)
 # =======================================================
-df_mujeres_96 <- ds %>%
-    filter(
-        floor(tiempo / 100) == 1996,   # Extrae el año
-        sexo == 1
-    ) %>%
+df_96 <- ds %>%
+    filter(year(tiempo) == 1996) %>%  # Extrae el año
     collect() # ¡ESTA ES LA CLAVE!
 # collect() ejecuta la consulta en C++ y solo trae a la RAM las mujeres de 1996.
-# Como la base ya está achicada, tus 15GB de RAM van a procesar el resto sin problemas.
 
 # =======================================================
-# PASO 1: Armar los NODOS (Atributos estáticos) DEL R32!!
+# PASO 1: Armar los NODOS (Atributos estáticos) DEL R34!!
 # =======================================================
-nodos <- df_mujeres_96 %>%
-    group_by(r32) %>%
+
+desc_r34 <- readRDS("~/Repos/Cs-Datos-e520-MLER-grupo-5/materiales/desc_r34.rds")
+nodos <- df_96 %>%
+    group_by(r34) %>%
     summarise(
-        trabajadores = n_distinct(id_trabajador),
-        ingreso_promedio = mean(rem_tot, na.rm = TRUE)
+        trabajadores = n_distinct(id_trabajador)
+        # ,ingreso_promedio = mean(rem_tot, na.rm = TRUE)
     ) %>%
-
-    rename(name = r32)
-
+    #rename(name = r34) %>%
     mutate(
-        descripcion = desc_r32$descripcion[ match(r32, desc_r32$r32) ]
+        descripcion = desc_r34$descripcion[ match(r34, desc_r34$r34) ]
     ) %>%
-    rename(name = r32) %>%
+    rename(name = r34) %>%
     ungroup()
 
 
@@ -62,13 +54,9 @@ nodos <- df_mujeres_96 %>%
 # PASO 2: Armar las ARISTAS (Flujos Netos)
 # =======================================================
 # A. Calcular transiciones brutas
-transiciones <- df_mujeres_96 %>%
+transiciones <- df_96 %>%
     arrange(id_trabajador, tiempo) %>%
-    group_by(id_trabajador) %>%
-    mutate(r32_destino = lead(r32)) %>%
-    ungroup() %>%
-    filter(!is.na(r32_destino), r32 != r32_destino) %>%
-    count(origen = r32, destino = r32_destino, name = "flujo_bruto")
+    count(origen = r34, destino = sig_r34, name = "flujo_bruto")
 
 # B. Calcular flujo neto
 flujos_netos <- transiciones %>%
@@ -87,20 +75,18 @@ aristas_finales <- flujos_netos %>%
 
 # =======================================================
 # PASO 3: Construir y dibujar el GRAFO
-# =======================================================
+# =======================================================77777
+
 grafo_mujeres <- graph_from_data_frame(d = aristas_finales, vertices = nodos, directed = TRUE)
 
 ggraph(grafo_mujeres, layout = 'fr') +
     geom_edge_link(aes(width = peso), alpha = 0.5, arrow = arrow(length = unit(4, 'mm'))) +
-    geom_node_point(aes(size = trabajadores, color = ingreso_promedio)) +
-
-    geom_node_text(aes(label = name), vjust = 2, size = 3) +
-
-#    geom_node_text(aes(label = name), vjust = 2, size = 3) +
+    geom_node_point(aes(size = trabajadores
+                        )) +
     geom_node_text(aes(label = descripcion), vjust = 2, size = 3) +
 
     scale_edge_width(range = c(0.5, 3), name = "Flujo Neto") +
-    scale_color_viridis_c(option = "magma", name = "Salario Promedio") +
+#    scale_color_viridis_c(option = "magma", name = "Salario Promedio") +
     scale_size_continuous(range = c(3, 12), name = "Total Mujeres") +
     theme_void() +
     labs(title = "Red de Movilidad Laboral Neta - Mujeres (1996)")
