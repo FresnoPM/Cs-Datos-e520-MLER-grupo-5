@@ -1,19 +1,19 @@
 
 library(readxl)
 library(purrr)
-
+library(dplyr)
 path_descriptores <- "./materiales/anexo_estadistico_y_descriptores.xlsx"
 
-descriptores <- path %>%
+descriptores <- path_descriptores %>%
     excel_sheets() %>%
     set_names() %>%
     map(~ read_excel(path = path_descriptores, sheet = .x))
 
 library(janitor)
 desc_letra <- descriptores[["DESC_LETRA"]] %>%
-    select(1,3,4) %>%
+    # select(1,3,4) %>%
     row_to_names(row_number = 2) %>%
-    rename( letra = 1, descripcion = 2, sexualizacion = 3)
+    rename( letra = 1, descripcion = 3, sexualizacion = 4)
 
 desc_r32 <- descriptores[["DESC_R32"]] %>%
     row_to_names(row_number = 2) %>%
