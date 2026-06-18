@@ -57,7 +57,6 @@ red_sectores <- graph_from_adjacency_matrix(matriz_transiciones
                                             ,weighted = TRUE
                                             #,diag = FALSE
                                             )
-rm( network_graph)
 # Basic igraph visualization
 plot(red_sectores,
      edge.arrow.size = 0.5,
