@@ -7,16 +7,17 @@ library(ggseqplot)
 library(igraph)
 
 desc_letra <- readRDS("./materiales/desc_letra.rds")
-ds_original <- open_dataset("./materiales/df_mujer_real.parquet")
 sexo = "Mujeres"
+ds_original <- readRDS("./materiales/df_MLER_licencias.rds")
 
-df_sectores_edad <- ds_original %>%
+df_sectores_edad <- ds_original  %>%
+
+    filter(edad <= 35) %>%
     select(
         id_trabajador #, tiempo
         ,letra
         ,edad
-    ) %>%
-    filter(edad <= 65) %>%
+    )%>%
     distinct(id_trabajador, edad, .keep_all = TRUE) %>%
     collect() %>%
     mutate(letra = desc_letra$descripcion[match(letra, desc_letra$letra)]) %>%
