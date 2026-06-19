@@ -8,11 +8,10 @@ library(igraph)
 
 desc_letra <- readRDS("./materiales/desc_letra.rds")
 sexo = "Mujeres"
-ds_original <- readRDS("./materiales/df_MLER_licencias.rds")
+ds_original <- readRDS("./materiales/df_MLER_licencias.rds")  #datos únicamente de de mujeres de 25 a 35
+
 
 df_sectores_edad <- ds_original  %>%
-
-    filter(edad <= 35) %>%
     select(
         id_trabajador #, tiempo
         ,letra

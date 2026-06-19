@@ -15,7 +15,6 @@ library(data.table)
 # ==============================================================================
 # 2. FILTRO INICIAL (igual que antes, Arrow hace el trabajo pesado)
 # ==============================================================================
-cat("Consultando MLER.parquet y filtrando universo CABA (25-35 años)...\n")
 
 df_crudo <- open_dataset("./materiales/MLER.parquet") %>%
     mutate(
@@ -23,7 +22,9 @@ df_crudo <- open_dataset("./materiales/MLER.parquet") %>%
         mes  = as.integer(tiempo %% 100),
         edad = anio - fnacim
     ) %>%
-    filter(provi %in% c(2, 14, 82, 94), edad >= 25, edad <= 35) %>%
+    filter(provi %in% c(2, 14, 82, 94)
+           #, edad >= 25
+           , edad <= 35) %>%
     select(id_trabajador, tiempo, sexo, rem_tot, edad, anio, mes, letra, r34) %>%
     collect() %>%
     setDT()   # convierte a data.table en memoria, sin copiar
@@ -31,7 +32,6 @@ df_crudo <- open_dataset("./materiales/MLER.parquet") %>%
 # ==============================================================================
 # 3. DETECCIÓN DEL EVENTO — versión data.table
 # ==============================================================================
-cat("Detectando licencias y calculando el Mes 0...\n")
 
 # "0" Sin dato
 # "1" Mujer
@@ -82,6 +82,8 @@ df_final[, meses_relativos := ((anio - (tiempo_mes_cero %/% 100L)) * 12L) +
 
 # PREPARACIÓN DE ESTADOS Y BALANCEO DEL PANEL PARA TRAMINER
 
+
+# df_final <- readRDS( "./materiales/df_MLER_licencias.rds")
 ventana_inicio <- -24L
 ventana_fin    <- 36L
 
@@ -164,7 +166,7 @@ seqIplot(seq_control,
          with.legend = "right",
          idxs = sample(1:nrow(seq_control), n_tratamiento)) # <-- ESTA ES LA MAGIA
 
-abline(v = posicion_mes_cero, col = "black", lwd = 2, lty = 2)
+abline(v = 24, col = "black", lwd = 2, lty = 2)
 
 par(mfrow = c(1, 1))
 
