@@ -23,7 +23,7 @@ selecciono_por_edad <- function(ds,
                #, rem_tot_real
                , edad
                #, letra
-               , nodo_final) %>%
+               , nodo) %>%
         distinct(id_trabajador, edad, .keep_all = TRUE) %>%
         collect() %>%
         filter(!is.na(edad) & .$edad <= edad_max & .$edad >= edad_min) %>%
@@ -36,7 +36,7 @@ selecciono_por_edad <- function(ds,
     fuera <- "Fuera"
     pausa <- "Pausa"
 
-    alfabeto <<- c(unique(df_sectores$nodo_final), fuera, pausa)
+    alfabeto <<- c(unique(df_sectores$nodo), fuera, pausa)
 
     if(debug==TRUE){
         print(class(df_sectores))
@@ -57,7 +57,7 @@ df_sectores_edad <- selecciono_por_edad(ds_original_muj, cantidad=5, debug=TRUE)
 df_secuencias <- df_sectores_edad %>%
     pivot_wider( # tidyverse
         names_from = edad,
-        values_from = nodo_final,
+        values_from = nodo,
         values_fill = fuera,
         names_sort = TRUE # Mantenemos la corrección de edades
     ) %>%

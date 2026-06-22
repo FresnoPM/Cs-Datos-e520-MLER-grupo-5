@@ -34,7 +34,7 @@ transformar <- function(df, cantidad=0, debug=FALSE){
 
         dplyr::mutate(
             # ACA ESTA LA MAGIA: Si está en licencia, le pegamos la palabra al sector
-            nodo_final = ifelse(licencia == 1,
+            nodo = ifelse(licencia == 1,
                                 paste0("Licencia: ", desc_letra),
                                 paste0("Activo: ", desc_letra)
             )
