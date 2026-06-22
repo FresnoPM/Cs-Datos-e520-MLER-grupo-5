@@ -1,9 +1,10 @@
+library(dplyr)
+library(data.table)
 library(tidyverse)
 library(arrow)
 library(TraMineR)
 library(ggseqplot)
-library(dplyr)
-library(data.table)
+
     # library(paletteer)
     # library(scales)
     # library(igraph)
@@ -22,21 +23,18 @@ selecciono_por_edad <- function(ds,
                , tiempo
                #, rem_tot_real
                , edad
-               #, letra
+               , letra
                , nodo) %>%
-        distinct(id_trabajador, edad, .keep_all = TRUE) %>%
+        distinct(id_trabajador, tiempo, edad, nodo, .keep_all = TRUE) %>%
         collect() %>%
         filter(!is.na(edad) & .$edad <= edad_max & .$edad >= edad_min) %>%
         setDT()
 
     if(cantidad != 0){
-        df_sectores <- df_sectores %>% filter( .$id_trabajador %in% sample( unique(.$id_trabajador), size = cantidad )  )
+        df_sectores_sample <- df_sectores %>% filter( df_sectores$id_trabajador %in% sample( unique(.$id_trabajador), size = cantidad )  )
+        return(df_sectores_sample)
     }
 
-    fuera <- "Fuera"
-    pausa <- "Pausa"
-
-    alfabeto <<- c(unique(df_sectores$nodo), fuera, pausa)
 
     if(debug==TRUE){
         print(class(df_sectores))
@@ -47,12 +45,15 @@ selecciono_por_edad <- function(ds,
 }
 
 
-
-#ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet", format = "parquet")
+ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet", format = "parquet")
 sexo = "Mujeres"
-alfabeto <- c()
-df_sectores_edad <- selecciono_por_edad(ds_original_muj, cantidad=5, debug=TRUE)
-
+df_sectores_edad <- selecciono_por_edad(ds_original_muj
+                                        ,cantidad=15
+                                        ,debug=TRUE)
+fuera <- "Fuera"
+pausa <- "Pausa"
+estados <- c(unique(df_sectores_edad$nodo), fuera)
+alfabeto <- c(unique(df_sectores_edad$letra), 9999)
 
 df_secuencias <- df_sectores_edad %>%
     pivot_wider( # tidyverse
@@ -63,11 +64,12 @@ df_secuencias <- df_sectores_edad %>%
     ) %>%
     arrange(id_trabajador)
 
-matriz_estados <- as.data.frame(  df_secuencias %>% select(-id_trabajador, -tiempo)  )
+matriz_estados <- as.data.table(  df_secuencias %>% select(-id_trabajador, -tiempo, -letra)  )
+rownames(matriz_estados) = make.names(names, unique=TRUE)
 secuencia_sectores <- seqdef(
     data = matriz_estados,
-    alphabet = alfabeto,
-    states = alfabeto,
+    alphabet = estados,
+    states = estados, # descripcion
     id = df_secuencias$id_trabajador
 )
 
