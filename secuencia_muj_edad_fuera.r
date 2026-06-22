@@ -4,15 +4,12 @@ library(TraMineR)
 library(ggseqplot)
 library(igraph)
 
-library(paletteer)
-library(scales)
-
 if(!exists("colores_MLER", mode="function")) source("./colores_MLER.r")
 colores_sectores <- colores_MLER[[1]]
 colores_favoritos <- colores_MLER[[2]]
 
-ds_original <- open_dataset("./materiales/MLER_mujeres.parquet")
 sexo = "Mujeres"
+ds_original <- open_dataset("./materiales/MLER_mujeres.parquet")
 
 set.seed(2001)
 
@@ -72,21 +69,18 @@ crear_secuencia <- function(ds,
 
 secuencia_sectores <- crear_secuencia(ds_original , muestra = 0)
 
-# ########################
-#
-# ARMO LA RED
-#
+# #########################
+# ARMO LA RED#
 # ########################
 matriz_transiciones <- seqtrate(secuencia_sectores)
-# Convert the transition matrix into a directed igraph object
-# Weights represent the transition probabilities
+
 red_sectores <- graph_from_adjacency_matrix(
     matriz_transiciones
     ,mode = "directed"
     ,weighted = TRUE
     #,diag = FALSE # diag true hace que se grafiquen las transiciones a si mismos
 )
-# Basic igraph visualization
+
 plot(
     red_sectores,
     edge.arrow.size = 0.1,
@@ -118,15 +112,14 @@ ggseqiplot(
 ggseqdplot(
     secuencia_sectores
     ) + geom_vline(xintercept = edades_clave
-    )  + ggtitle(
+    ) + ggtitle(
         paste("Distribución Sectorial - ", sexo, " (1996-2021)")
     ) + xlab("Edades") + ylab("Proporción")
 
 ##################################
 # Gráfico de Tiempo Medio de Permanencia
 # #############################3
-
-secuencia_sectores_permanencia <- crear_secuencia(ds_original , muestra = 0)
+secuencia_sectores_permanencia <- crear_secuencia(ds_original , muestra = 10000)
 secuencia_sectores_permanencia <- seqrecode(secuencia_sectores_permanencia, recodes = list("%" = c("Fuera")))
 
 # no entiendo por qué me queda chiquito el gráfico
