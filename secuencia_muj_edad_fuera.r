@@ -38,13 +38,10 @@ crear_secuencia <- function(ds,
             ,nodo
             ,edad
         )
-    relleno <- "Fuera"
     alfabeto <- c(
         sort(unique(df_sectores_edad$nodo), decreasing = FALSE)
         , relleno
         )
-    print(alfabeto)
-
     df_secuencias <- df_sectores_edad %>%
         pivot_wider(
             # tidyverse
@@ -103,9 +100,12 @@ plot(
 
 
 secuencia_chica <- crear_secuencia(ds_original , muestra = 1000)
+cpal(secuencia_chica)[31] <-  "#c9c9c9"         # "Fuera" , Default : "#1d1d1d"         # "Fuera"
+
+
 edades_clave <- c(5, 10, 15, 20, 25, 30, 35)
 ggseqiplot(
-    secuencia_sectores, sortv = "from.start", labels = label_wrap(20)
+    secuencia_chica, sortv = "from.start", labels = label_wrap(20)
     ) + geom_vline(xintercept = edades_clave
     ) + ggtitle(
         paste("Trayectorias Individuales - ", sexo, " (1996-2021)")
@@ -122,12 +122,18 @@ ggseqdplot(
         paste("Distribución Sectorial - ", sexo, " (1996-2021)")
     ) + xlab("Edades") + ylab("Proporción")
 
-
+##################################
 # Gráfico de Tiempo Medio de Permanencia
+# #############################3
+
+secuencia_sectores_permanencia <- crear_secuencia(ds_original , muestra = 10000)
+secuencia_sectores_permanencia <- seqrecode(secuencia_sectores_permanencia, recodes = list("%" = c("Fuera")))
+
 seqmtplot(
-    secuencia_sectores,
+    secuencia_sectores_permanencia,
     main = paste("Tiempo Medio de Permanencia - ", sexo, " (1996-2021)"),
     ylab = "Meses promedio",
     border = NA,
     with.legend = "right"
+    ,type="d"
 )
