@@ -126,14 +126,22 @@ ggseqdplot(
 # Gráfico de Tiempo Medio de Permanencia
 # #############################3
 
-secuencia_sectores_permanencia <- crear_secuencia(ds_original , muestra = 10000)
+secuencia_sectores_permanencia <- crear_secuencia(ds_original , muestra = 0)
 secuencia_sectores_permanencia <- seqrecode(secuencia_sectores_permanencia, recodes = list("%" = c("Fuera")))
+
+# no entiendo por qué me queda chiquito el gráfico
+
+par(mfrow=c(1, 2)) # Adjust panel layout
+dev.new(width = 10, height = 2, noRStudioGD = TRUE)
 
 seqmtplot(
     secuencia_sectores_permanencia,
     main = paste("Tiempo Medio de Permanencia - ", sexo, " (1996-2021)"),
     ylab = "Meses promedio",
     border = NA,
-    with.legend = "right"
-    ,type="d"
+    yaxis = FALSE, ylim = c(0, 3),
+    with.legend = FALSE
 )
+
+axis(2, at = seq(from = 0, to = 2, by = 0.1)) # Add custom axis
+seqlegend(secuencia_sectores_permanencia ) # Plot legend separately
