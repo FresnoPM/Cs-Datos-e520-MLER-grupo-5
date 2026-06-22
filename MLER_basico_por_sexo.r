@@ -3,7 +3,7 @@ library(tidyr)
 library(lubridate)
 
 # Agrego columna licencia y duracion
-transformar <- function(df, cantidad=0, debug=0){
+transformar <- function(df, cantidad=0, debug=FALSE){
     if(cantidad != 0){
         df <- df %>% dplyr::filter( .$id_trabajador %in% sample( unique(df$id_trabajador), size = cantidad )  )
         }
@@ -35,8 +35,8 @@ transformar <- function(df, cantidad=0, debug=0){
         dplyr::mutate(
             # ACA ESTA LA MAGIA: Si está en licencia, le pegamos la palabra al sector
             nodo_final = ifelse(licencia == 1,
-                                paste0("Licencia - ", desc_letra),
-                                paste0("Activo - ", desc_letra)
+                                paste0("Licencia_", desc_letra),
+                                paste0("Activo_", desc_letra)
             )
         ) %>%
         dplyr::rename(  desc_r32 = descripcion_sector  ) %>%
@@ -51,7 +51,7 @@ transformar <- function(df, cantidad=0, debug=0){
         dplyr::arrange(  id_trabajador, tiempo  ) %>%
         dplyr::mutate(  id = dplyr::row_number(), .before = 1  )
 
-    if(debug!=0){
+    if(debug==TRUE){
             print(   paste0("edad NA: ", df_transformado %>% dplyr::count(is.na(.$edad)) )   )
         }
 
@@ -67,7 +67,8 @@ df_transformado_hom <- transformar(df_original_hom)
 write_parquet(df_transformado_muj, "./materiales/MLER_mujeres.parquet")
 write_parquet(df_transformado_hom, "./materiales/MLER_hombres.parquet")
 
-saveRDS(df_transformado_muj, file = "./materiales/MLER_mujeres.rds"); saveRDS(df_transformado_hom, file = "./materiales/MLER_hombres.rds")
+# saveRDS(df_transformado_muj, file = "./materiales/MLER_mujeres.rds")
+# saveRDS(df_transformado_hom, file = "./materiales/MLER_hombres.rds")
 
 
 #       MUJERES
@@ -77,3 +78,5 @@ saveRDS(df_transformado_muj, file = "./materiales/MLER_mujeres.rds"); saveRDS(df
 #       HOMBRES
 #       1 edad is num           33.170.777
 #       2 edad is na               618.107
+
+
