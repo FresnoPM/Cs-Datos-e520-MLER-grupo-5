@@ -7,9 +7,14 @@ library(igraph)
 library(paletteer)
 library(scales)
 
+if(!exists("colores_MLER", mode="function")) source("./colores_MLER.r")
+colores_sectores <- colores_MLER[[1]]
+colores_favoritos <- colores_MLER[[2]]
 
 ds_original <- open_dataset("./materiales/MLER_mujeres.parquet")
 sexo = "Mujeres"
+
+set.seed(2001)
 
 crear_secuencia <- function(ds,
                             muestra = 0,
@@ -20,12 +25,9 @@ crear_secuencia <- function(ds,
     df_sectores_edad <- ds %>%
         select(
             id_trabajador #, tiempo
-            ,
-            letra
-            ,
-            nodo
-            ,
-            edad
+            ,letra
+            ,nodo
+            ,edad
         ) %>%
         filter(edad <= edad_max &
                    edad >= edad_min & !is.na(edad)) %>%
@@ -33,14 +35,15 @@ crear_secuencia <- function(ds,
         collect() %>%
         select(
             id_trabajador # , tiempo
-            ,
-            nodo
-            ,
-            edad
+            ,nodo
+            ,edad
         )
     relleno <- "Fuera"
-    alfabeto_sectores <- c(sort(unique(df_sectores_edad$nodo), decreasing = FALSE)
-                           , relleno)
+    alfabeto <- c(
+        sort(unique(df_sectores_edad$nodo), decreasing = FALSE)
+        , relleno
+        )
+    print(alfabeto)
 
     df_secuencias <- df_sectores_edad %>%
         pivot_wider(
@@ -56,12 +59,14 @@ crear_secuencia <- function(ds,
 
     secuencia_sectores <- seqdef(
         data = matriz_estados,
-        alphabet = alfabeto_sectores,
-        states = alfabeto_sectores,
+        alphabet = alfabeto,
+        states = alfabeto,
+        cpal = colores_sectores,
         id = df_secuencias$id_trabajador
     )
     if (muestra != 0) {
-        indices_muestra <- sample(1:nrow(secuencia_sectores), muestra)
+        indices_muestra <- sample(1:nrow(secuencia_sectores)
+                                  , muestra)
         secuencia_sectores <- secuencia_sectores[indices_muestra, ]
     }
     return(secuencia_sectores)
@@ -70,7 +75,6 @@ crear_secuencia <- function(ds,
 
 secuencia_sectores <- crear_secuencia(ds_original , muestra = 0)
 
-set.seed(2001)
 # ########################
 #
 # ARMO LA RED
@@ -81,10 +85,8 @@ matriz_transiciones <- seqtrate(secuencia_sectores)
 # Weights represent the transition probabilities
 red_sectores <- graph_from_adjacency_matrix(
     matriz_transiciones
-    ,
-    mode = "directed"
-    ,
-    weighted = TRUE
+    ,mode = "directed"
+    ,weighted = TRUE
     #,diag = FALSE # diag true hace que se grafiquen las transiciones a si mismos
 )
 # Basic igraph visualization
@@ -95,13 +97,12 @@ plot(
     edge.width = E(red_sectores)$weight * 4
 ) # Scale edges by probability
 
-
-# ====================================================================
+# ===================================================================
 # SEQ I Plot x edad
-# ====================================================================
+# ===================================================================
 
-#
-# cpal(secuencia_sectores) <- paletteer_d("trekcolors::lcars_cardassian", n = length(alfabeto_sectores))
+
+secuencia_chica <- crear_secuencia(ds_original , muestra = 1000)
 edades_clave <- c(5, 10, 15, 20, 25, 30, 35)
 ggseqiplot(
     secuencia_sectores, sortv = "from.start", labels = label_wrap(20)
