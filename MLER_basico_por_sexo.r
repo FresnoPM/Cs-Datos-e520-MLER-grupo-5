@@ -10,7 +10,9 @@ transformar <- function(df, cantidad=0, debug=FALSE){
 
     df_transformado <- df %>%
         dplyr::mutate(
-            licencia = ifelse(rem_tot_real == 0, 1, 0),
+            licencia = ifelse(
+                rem_tot_real == 0 & lag(letra) == letra & lag(id_trabajador) == id_trabajador,
+                1, 0),
 
             # Mapeamos el sector base (a 1 dígito como pidió el profe)
             desc_letra = dplyr::case_when(
