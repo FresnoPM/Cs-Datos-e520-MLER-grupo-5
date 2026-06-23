@@ -5,38 +5,35 @@ library(lubridate)
 
 # Agrego columna licencia y duracion# Agrego columna licencia y duracion
 transformar <- function(ds, cantidad = 0, debug = FALSE) {
-
+    if(debug) inicio <- Sys.time()
     # -- Fase Arrow: reducir datos antes del collect ---------------------------
     if (cantidad != 0) {
         ids <- ds |>
-            distinct(id_trabajador) |>
-            collect() |>
-            pull(id_trabajador) |>
+            dplyr::distinct(id_trabajador) |>
+            dplyr::collect() |>
+            dplyr::pull(id_trabajador) |>
             sample(size = cantidad)
-        ds <- ds |> filter(id_trabajador %in% ids)
+        ds <- ds |> dplyr::filter(id_trabajador %in% ids)
     }
 
-    # Una fila por (id_trabajador, tiempo): mayor rem_tot_real; empates se rompen tras collect()
+    # Una fila por (id_trabajador, tiempo): mayor rem_tot_real; empates rotos arbitrariamente
     df <- ds |>
-        group_by(id_trabajador, tiempo) |>
-        filter(rem_tot_real == max(rem_tot_real, na.rm = TRUE)) |>
-        ungroup() |>
-        collect() |>
-        group_by(id_trabajador, tiempo) |>
-        slice_head(n = 1) |>
-        ungroup()
+        dplyr::collect() |>
+        dplyr::group_by(id_trabajador, tiempo) |>
+        dplyr::slice_max(rem_tot_real, n = 1, with_ties = FALSE) |>
+        dplyr::ungroup()
 
     # -- Fase R: operaciones no soportadas por Arrow ---------------------------
     df_transformado <- df |>
-        arrange(id_trabajador, tiempo) |>
-        mutate(
+        dplyr::arrange(id_trabajador, tiempo) |>
+        dplyr::mutate(
             licencia = as.integer(
                 rem_tot_real == 0 &
-                    lag(letra) == letra &
-                    lag(id_trabajador) == id_trabajador
+                    dplyr::lag(letra) == letra &
+                    dplyr::lag(id_trabajador) == id_trabajador
             ),
             # Sector base a 1 dígito
-            desc_letra = case_when(
+            desc_letra = dplyr::case_when(
                 letra == 1  ~ "Agro",
                 letra == 2  ~ "Pesca",
                 letra == 3  ~ "Mineria",
@@ -51,32 +48,38 @@ transformar <- function(ds, cantidad = 0, debug = FALSE) {
                 letra == 12 ~ "Enseñanza",
                 letra == 13 ~ "Servicios Salud",
                 letra == 14 ~ "Servicios Sociales",
-                .default    ~ "Otros"
+                TRUE        ~ "Otros"
             ),
             # Si está en licencia, lo marcamos en el nodo
-            nodo = if_else(licencia == 1,
-                           paste0("Licencia: ", desc_letra),
-                           paste0("Activo: ", desc_letra))
+            nodo = dplyr::if_else(licencia == 1,
+                                  paste0("Licencia: ", desc_letra),
+                                  paste0("Activo: ", desc_letra))
         ) |>
-        rename(desc_r32 = descripcion_sector) |>
-        group_by(id_trabajador, letra, r32) |>
-        add_count(name = "duracion_letra") |>
-        ungroup() |>
-        relocate(desc_letra, duracion_letra, .after = letra) |>
-        mutate(id = row_number(), .before = 1)
+        # dplyr::rename(desc_r32 = descripcion_sector) |>
+        # dplyr::group_by(id_trabajador, letra, r32) |>
+        dplyr::add_count(name = "duracion_letra") |>
+        dplyr::ungroup() |>
+        dplyr::relocate(desc_letra, duracion_letra, .after = letra) |>
+        dplyr::mutate(id = dplyr::row_number(), .before = 1)
 
-    if (debug) message("edad NA: ", sum(is.na(df_transformado$edad)))
+    if (debug) {
+        message("edad NA: ", sum(is.na(df_transformado$edad)))
+        message("Duración procesamiento: ", Sys.time()-inicio , " segundos")
+        }
 
     df_transformado
 }
 
+#ds_original_muj <- open_dataset("./materiales/MLER_mujeres_INCOMPL.parquet")
 
-# df_transformado_muj_test <- transformar(open_dataset("./materiales/MLER_mujeres_INCOMPL.parquet"), cantidad = 1000)
-df_transformado_muj_test <- transformar(ds_original_muj, cantidad = 10000, debug = TRUE)
-df_transformado_hom <- transformar(open_dataset("./materiales/MLER_hombres_INCOMPL.parquet"))
-
+# df_transformado_muj <- transformar(ds_original_muj, cantidad = 1000)
+df_transformado_muj_test <- transformar(ds_original_muj, cantidad = 0, debug = TRUE)
 write_parquet(df_transformado_muj, "./materiales/MLER_mujeres.parquet")
-write_parquet(df_transformado_hom, "./materiales/MLER_hombres.parquet")
+
+
+
+# df_transformado_hom <- transformar(open_dataset("./materiales/MLER_hombres_INCOMPL.parquet"))
+# write_parquet(df_transformado_hom, "./materiales/MLER_hombres.parquet")
 
 
 #       MUJERES
