@@ -1,17 +1,27 @@
-library(tidyverse)
+library(tidyverse) # incluye dplyr
 library(arrow)
 library(TraMineR)
-library(ggseqplot)
-library(igraph)
 
 if(!exists("colores_MLER", mode="function")) source("./colores_MLER.r")
 colores_sectores <- colores_MLER[[1]]
 colores_favoritos <- colores_MLER[[2]]
-
-sexo = "Mujeres"
-ds_original <- open_dataset("./materiales/MLER_mujeres.parquet")
-
 set.seed(2001)
+
+####
+#### FUNCIONES ####
+####
+
+reemplazar_fuera_con_pausa <- function(fila, relleno = "Fuera") { # recibe una fila a la vez
+    no_relleno <- which(fila != relleno)
+    if (length(no_relleno) < 2) return(fila)
+    primer_activo <- min(no_relleno)
+    ultimo_activo <- max(no_relleno)
+    entre <- seq_along(fila) > primer_activo &
+             seq_along(fila) < ultimo_activo &
+             fila == relleno
+    fila[entre] <- "Pausa"
+    return(fila) # devuelve una fila que luego se intertara en la matriz
+}
 
 crear_secuencia <- function(ds,
                             muestra = 0,
@@ -21,27 +31,32 @@ crear_secuencia <- function(ds,
                             relleno = "Fuera") {
     df_sectores_edad <- ds %>%
         select(
-            id_trabajador #, tiempo
-            ,letra
-            ,nodo
-            ,edad
+            id_trabajador
+            # , tiempo
+            # , letra
+            , nodo
+            , edad
         ) %>%
-        filter(edad <= edad_max &
-                   edad >= edad_min & !is.na(edad)) %>%
+        filter(
+            edad <= edad_max
+            & edad >= edad_min
+            & !is.na(edad)
+               ) %>%
         distinct(id_trabajador, edad, .keep_all = TRUE) %>%
         collect() %>%
         select(
-            id_trabajador # , tiempo
-            ,nodo
-            ,edad
+            id_trabajador
+            # , tiempo
+            , nodo
+            , edad
         )
     alfabeto <- c(
         sort(unique(df_sectores_edad$nodo), decreasing = FALSE)
         , relleno
+        , "Pausa"
         )
     df_secuencias <- df_sectores_edad %>%
-        pivot_wider(
-            # tidyverse
+        pivot_wider(            # tidyverse
             names_from = edad,
             values_from = nodo,
             values_fill = relleno,
@@ -51,6 +66,11 @@ crear_secuencia <- function(ds,
 
     matriz_estados <- as.data.frame(df_secuencias %>% select(-id_trabajador))
 
+    # Reemplazar "Fuera" entre estados activos/licencia con "Pausa"
+    temp <- t(  apply(matriz_estados, 1, reemplazar_fuera_con_pausa, relleno = relleno)  )
+    colnames(temp) <- colnames(matriz_estados)
+    matriz_estados <- as.data.frame(temp)
+
     secuencia_sectores <- seqdef(
         data = matriz_estados,
         alphabet = alfabeto,
@@ -59,20 +79,34 @@ crear_secuencia <- function(ds,
         id = df_secuencias$id_trabajador
     )
     if (muestra != 0) {
-        indices_muestra <- sample(1:nrow(secuencia_sectores)
-                                  , muestra)
+        indices_muestra <- sample(  1:nrow(secuencia_sectores) , muestra  )
         secuencia_sectores <- secuencia_sectores[indices_muestra, ]
     }
     return(secuencia_sectores)
 
 }
 
-secuencia_sectores <- crear_secuencia(ds_original , muestra = 0)
+ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
+secuencia_sectores_muj <- crear_secuencia(ds_original_muj , muestra = 0)
+write_parquet(secuencia_sectores, "./materiales/secuencia_sectores_edad_mujeres.parquet")
 
-# #########################
-# ARMO LA RED#
-# ########################
+ds_original_hom <- open_dataset("./materiales/MLER_hombres.parquet")
+secuencia_sectores_hom <- crear_secuencia(ds_original_hom , muestra = 0)
+write_parquet(secuencia_sectores_hom, "./materiales/secuencia_sectores_edad_hombres.parquet")
+
+### Decido si voy a trbajar con hombres o mujeres
+sexo = "Mujeres" ; secuencia_sectores <- secuencia_sectores_muj
+# sexo = "Hombres" ; secuencia_sectores <- secuencia_sectores_hom
+
+
+
+# #############
+# ARMO LA RED #
+# #############
 matriz_transiciones <- seqtrate(secuencia_sectores)
+
+library(ggseqplot)
+library(igraph)
 
 red_sectores <- graph_from_adjacency_matrix(
     matriz_transiciones
@@ -95,7 +129,6 @@ plot(
 
 secuencia_chica <- crear_secuencia(ds_original , muestra = 1000)
 cpal(secuencia_chica)[31] <-  "#c9c9c9"         # "Fuera" , Default : "#1d1d1d"         # "Fuera"
-
 
 edades_clave <- c(5, 10, 15, 20, 25, 30, 35)
 ggseqiplot(

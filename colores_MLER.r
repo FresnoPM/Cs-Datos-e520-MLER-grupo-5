@@ -30,8 +30,8 @@ colores_MLER <- list(
         "#9c0000",        # "Licencia: Servicios Salud"
         "#975436",        # "Licencia: Servicios Sociales"
         "#1b0d9f",        # "Licencia: Transporte"
-        "#1d1d1d"         # "Fuera" default
-        # , "#8bb2a5"     # "Pausa"
+        "#1d1d1d",        # "Fuera" default
+        "#8bb2a5"         # "Pausa"
 
 
     ),
