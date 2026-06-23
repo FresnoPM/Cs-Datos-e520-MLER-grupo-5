@@ -22,42 +22,59 @@ reemplazar_fuera_con_pausa <- function(fila, relleno = "Fuera") { # recibe una f
     fila[entre] <- "Pausa"
     return(fila) # devuelve una fila que luego se intertara en la matriz
 }
-
 crear_secuencia <- function(ds,
                             muestra = 0,
                             edad_min = 17,
                             edad_max = 50,
                             debug = FALSE,
-                            relleno = "Fuera") {
-    df_sectores_edad <- ds %>%
+                            relleno = "Fuera",
+                            tipo = "edad") {
+    df_sectores <- ds %>%
         select(
             id_trabajador
-            # , tiempo
-            # , letra
             , nodo
             , edad
+            , tiempo
         ) %>%
         filter(
             edad <= edad_max
             & edad >= edad_min
             & !is.na(edad)
-               ) %>%
-        distinct(id_trabajador, edad, .keep_all = TRUE) %>%
-        collect() %>%
+            ) %>%
+        collect()
+    if(tipo == "edad"){
+    df_sectores<- df_sectores%>%
         select(
             id_trabajador
-            # , tiempo
             , nodo
-            , edad
+            , {{tipo}}
+        ) %>%
+    distinct(id_trabajador, edad, .keep_all = TRUE)
+    }else{
+        df_sectores<- df_sectores%>%
+            select(
+                id_trabajador
+                , nodo
+                , {{tipo}}
+            ) %>%
+            distinct(id_trabajador, tiempo, .keep_all = TRUE)
+
+    }
+
+
+    if (muestra != 0) {
+        indices_muestra <- sample(unique(df_sectores$id_trabajador), size = muestra)
+        df_sectores <- df_sectores %>% filter(.$id_trabajador %in% indices_muestra)
+    }
+
+    alfabeto <- c(relleno
+                  , "Pausa"
+                  , sort(unique(df_sectores$nodo), decreasing = FALSE)
         )
-    alfabeto <- c(
-        sort(unique(df_sectores_edad$nodo), decreasing = FALSE)
-        , relleno
-        , "Pausa"
-        )
-    df_secuencias <- df_sectores_edad %>%
+
+    df_secuencias <- df_sectores %>%
         pivot_wider(            # tidyverse
-            names_from = edad,
+            names_from = {{tipo}},
             values_from = nodo,
             values_fill = relleno,
             names_sort = TRUE # Mantenemos la corrección de edades
@@ -75,25 +92,26 @@ crear_secuencia <- function(ds,
         data = matriz_estados,
         alphabet = alfabeto,
         states = alfabeto,
-        cpal = colores_sectores,
+        cpal = colores_sectores[c(1:length(alfabeto))],
         id = df_secuencias$id_trabajador
     )
-    if (muestra != 0) {
-        indices_muestra <- sample(  1:nrow(secuencia_sectores) , muestra  )
-        secuencia_sectores <- secuencia_sectores[indices_muestra, ]
-    }
     return(secuencia_sectores)
 
 }
-
+###
+### Empiezo acá ###
 ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
-secuencia_sectores_muj <- crear_secuencia(ds_original_muj , muestra = 0)
-write_parquet(secuencia_sectores, "./materiales/secuencia_sectores_edad_mujeres.parquet")
+secuencia_sectores_muj_edad <- crear_secuencia(ds_original_muj , muestra = 0, tipo = "edad")
+write_parquet(secuencia_sectores_muj_edad, "./materiales/secuencia_sectores_edad_mujeres.parquet")
 
-ds_original_hom <- open_dataset("./materiales/MLER_hombres.parquet")
-secuencia_sectores_hom <- crear_secuencia(ds_original_hom , muestra = 0)
-write_parquet(secuencia_sectores_hom, "./materiales/secuencia_sectores_edad_hombres.parquet")
 
+secuencia_sectores_muj_tiempo <- crear_secuencia(ds_original_muj , muestra = 0, tipo = "tiempo")
+write_parquet(secuencia_sectores_muj_tiempo, "./materiales/secuencia_sectores_tiempo_mujeres.parquet")
+
+# ds_original_hom <- open_dataset("./materiales/MLER_hombres.parquet")
+# secuencia_sectores_hom <- crear_secuencia(ds_original_hom , muestra = 0)
+# write_parquet(secuencia_sectores_hom, "./materiales/secuencia_sectores_edad_hombres.parquet")
+#
 ### Decido si voy a trbajar con hombres o mujeres
 sexo = "Mujeres" ; secuencia_sectores <- secuencia_sectores_muj
 # sexo = "Hombres" ; secuencia_sectores <- secuencia_sectores_hom

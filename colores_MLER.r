@@ -1,5 +1,7 @@
 colores_MLER <- list(
     paleta <- c(
+        "#1d1d1d",        # "Fuera" default
+        "#8bb2a5",        # "Pausa"
         "#0B476B",        # "Activo: Agro"
         "#A14100",        # "Activo: Comercio"
         "#9F1002",        # "Activo: Construcción"
@@ -29,9 +31,7 @@ colores_MLER <- list(
         "#babed7",        # "Licencia: Pesca"
         "#9c0000",        # "Licencia: Servicios Salud"
         "#975436",        # "Licencia: Servicios Sociales"
-        "#1b0d9f",        # "Licencia: Transporte"
-        "#1d1d1d",        # "Fuera" default
-        "#8bb2a5"         # "Pausa"
+        "#1b0d9f"         # "Licencia: Transporte"
 
 
     ),
