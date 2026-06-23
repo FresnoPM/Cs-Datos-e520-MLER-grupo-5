@@ -3,12 +3,18 @@ library(tidyr)
 library(lubridate)
 
 # Agrego columna licencia y duracion
-transformar <- function(df, cantidad=0, debug=FALSE){
+transformar <- function(ds, cantidad=0, debug=FALSE){
     if(cantidad != 0){
-        df <- df %>% dplyr::filter( .$id_trabajador %in% sample( unique(df$id_trabajador), size = cantidad )  )
+        ds <- ds %>% dplyr::filter( .$id_trabajador %in% sample( unique(.$id_trabajador), size = cantidad )  )
         }
 
-    df_transformado <- df %>%
+    df_transformado <- ds %>%
+
+        # Keep only the highest-paid row per (id_trabajador, tiempo) combination
+        dplyr::group_by(id_trabajador, tiempo) %>%
+        dplyr::slice_max(rem_tot_real, n = 1, with_ties = FALSE) %>%
+        dplyr::ungroup() %>%
+
         dplyr::mutate(
             licencia = ifelse(
                 rem_tot_real == 0 & lag(letra) == letra & lag(id_trabajador) == id_trabajador,
@@ -61,8 +67,8 @@ transformar <- function(df, cantidad=0, debug=FALSE){
 }
 
 
-#df_original_muj <- read_parquet("./materiales/MLER_mujeres_INCOMPL.parquet")
-#df_original_hom <- read_parquet("./materiales/MLER_hombres_INCOMPL.parquet")
+#ds_original_muj <- read_parquet("./materiales/MLER_mujeres_INCOMPL.parquet")
+#ds_original_hom <- read_parquet("./materiales/MLER_hombres_INCOMPL.parquet")
 df_transformado_muj <- transformar(df_original_muj)
 df_transformado_hom <- transformar(df_original_hom)
 
@@ -80,3 +86,5 @@ write_parquet(df_transformado_hom, "./materiales/MLER_hombres.parquet")
 #       HOMBRES
 #       1 edad is num           33.170.777
 #       2 edad is na               618.107
+#
+
