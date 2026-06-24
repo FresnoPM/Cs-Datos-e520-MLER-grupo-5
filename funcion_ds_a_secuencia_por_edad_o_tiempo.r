@@ -107,13 +107,14 @@ crear_secuencia <- function(ds,
 # 1) Creo las secuencias para graficarlas luego ###
 # grabo el output en un archivo .parquet para poder consultarlo sin tener que correr todo el script cada vez.
 
-ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
+#ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
+ds_original_muj <- open_dataset("./materiales/MLER_mujeres_20_34.parquet")
 
 secuencia_sectores_muj_edad <- crear_secuencia(ds_original_muj , muestra = 0, tipo = "edad")
 write_parquet(secuencia_sectores_muj_edad, "./materiales/secuencia_sectores_edad_mujeres.parquet")
 
 secuencia_sectores_muj_tiempo <- crear_secuencia(ds_original_muj , muestra = 0, tipo = "tiempo")
-write_parquet(secuencia_sectores_muj_tiempo, "./materiales/secuencia_sectores_tiempo_mujeres.parquet")
+write_parquet(secuencia_sectores_muj_tiempo, "./materiales/secuencia_sectores_tiempo_mujeres_20_34.parquet")
 
 # 1.a) Si quiero trabajar con hombres :
 # ds_original_hom <- open_dataset("./materiales/MLER_hombres.parquet")
