@@ -59,12 +59,18 @@ transformar <- function(ds, cantidad = 0, debug = FALSE) {
                                   paste0("Licencia: ", desc_letra),
                                   paste0("Activo: ", desc_letra))
         ) |>
-        dplyr::add_count(name = "duracion_letra") |>
+        # agrega la columna duracion_letra para ver la duración de cada periodo de actividad o licencia en cada sector para cada id_trabajador
+                dplyr::group_by(id_trabajador) |>
+                dplyr::mutate(.run = cumsum(letra != dplyr::lag(letra, default = dplyr::first(letra)))) |>
+                dplyr::add_count(.run, name = "duracion_letra") |>
+                dplyr::select(-.run) |>
+
         dplyr::ungroup() |>
         dplyr::relocate(desc_letra, duracion_letra, .after = letra) |>
         dplyr::mutate(id = dplyr::row_number(), .before = 1)
 
     if (debug) {
+
         message("edad NA: ", sum(is.na(df_transformado$edad)))
         message("Duración procesamiento: ", difftime(Sys.time(), inicio, units = "mins"))
         }
@@ -85,9 +91,9 @@ cantidad_repetidas <- function(df) {
 ds_original_muj <- open_dataset("./materiales/MLER_mujeres_INCOMPL.parquet")
 
 # 2) Corro el script con una muestra pequeña para corroborar que no haya errores y detectarlos a tiempo, cuando lo considero aceptable lo aplico al dataset completo (tarda 12 minutos)
-# df_transformado_muj_muestra <- transformar(ds_original_muj, cantidad = 100, debug = TRUE)
+df_transformado_muj_muestra <- transformar(ds_original_muj, cantidad = 100, debug = TRUE)
 
-df_transformado_muj <- transformar(ds_original_muj, debug = TRUE)
+# df_transformado_muj <- transformar(ds_original_muj, debug = TRUE)
 
 # 2.1) Verifico si se logró el objetivo comparando con la versión anterior
 
