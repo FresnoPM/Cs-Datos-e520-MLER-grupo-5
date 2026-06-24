@@ -5,6 +5,7 @@ library(lubridate)
 
 # Funciones:
 # Transformar elimina casos de pluriempleo en cada mes para cada trabajador, dejando la fila con mayor remuneración total real e identifica cuáles periodos son activos y cuáles fueron con licencia. No distingue tipos de licencia.
+
 transformar <- function(ds, cantidad = 0, debug = FALSE) {
     if(debug) inicio <- Sys.time()
     # -- Fase Arrow: reducir datos antes del collect ---------------------------
@@ -99,7 +100,7 @@ cantidad_repetidas(df_transformado_anterior) # 636709
 # 3) Guardo el dataset transformado en un archivo parquet.
 # OJO: No eliminé las filas que  no tienen dato en la columna "edad" por las dudas que queramos incluirlas en otros cálculos.
 #
-# Mujer tiene (23 de junio 2026) 179.923 ocurrencias de NA en la columna "edad" luego de correr el script de "transformar" y Hombre tiene
+# Mujer tiene (23 de junio 2026) 179.923 ocurrencias de NA en la columna "edad" luego de correr el script de "transformar"
 
 write_parquet(df_transformado_muj, "./materiales/MLER_mujeres.parquet")
 
