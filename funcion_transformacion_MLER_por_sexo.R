@@ -111,6 +111,8 @@ cantidad_repetidas(df_transformado_anterior) # 636709
 write_parquet(df_transformado_muj, "./materiales/MLER_mujeres.parquet")
 
 # Repito el proceso para hombres
-
-df_transformado_hom <- transformar(open_dataset("./materiales/MLER_hombres_INCOMPL.parquet"))
-write_parquet(df_transformado_hom, "./materiales/MLER_hombres.parquet", debug = TRUE)
+ds_original_hom <- open_dataset("./materiales/MLER_hombres_INCOMPL.parquet")
+df_transformado_hom <- transformar(ds_original_hom,
+                                       # cantidad = 100,
+                                        debug = TRUE)
+write_parquet(df_transformado_hom_test, "./materiales/MLER_hombres.parquet")
