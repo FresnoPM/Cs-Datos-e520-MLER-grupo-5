@@ -29,6 +29,8 @@ crear_secuencia <- function(ds,
                             debug = FALSE,
                             relleno = "Fuera",
                             tipo = "edad") {
+    if(debug) inicio <- Sys.time()
+
     df_sectores <- ds %>%
         select(
             id_trabajador
@@ -95,11 +97,14 @@ crear_secuencia <- function(ds,
         cpal = colores_sectores[c(1:length(alfabeto))],
         id = df_secuencias$id_trabajador
     )
+    if (debug) {
+        message("Duración procesamiento: ", difftime(Sys.time(), inicio, units = "mins"))
+    }
     return(secuencia_sectores)
 
 }
 # Pasos:
-# 1) Creo las secuencicas para graficarlas luego ###
+# 1) Creo las secuencias para graficarlas luego ###
 # grabo el output en un archivo .parquet para poder consultarlo sin tener que correr todo el script cada vez.
 
 ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
