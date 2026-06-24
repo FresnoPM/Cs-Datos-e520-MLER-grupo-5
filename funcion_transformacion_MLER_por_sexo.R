@@ -3,7 +3,8 @@ library(dplyr)
 library(tidyr)
 library(lubridate)
 
-# Agrego columna licencia y duracion# Agrego columna licencia y duracion
+# Funciones:
+# Transformar elimina casos de pluriempleo en cada mes para cada trabajador, dejando la fila con mayor remuneración total real e identifica cuáles periodos son activos y cuáles fueron con licencia. No distingue tipos de licencia.
 transformar <- function(ds, cantidad = 0, debug = FALSE) {
     if(debug) inicio <- Sys.time()
     # -- Fase Arrow: reducir datos antes del collect ---------------------------
@@ -22,15 +23,17 @@ transformar <- function(ds, cantidad = 0, debug = FALSE) {
         dplyr::group_by(id_trabajador, tiempo) |>
         dplyr::slice_max(rem_tot_real, n = 1, with_ties = FALSE) |>
         dplyr::ungroup()
-
+    # if(debug) message("Cantidad de líneas elimnadas: ", nrow(ds) - nrow(df))
     # -- Fase R: operaciones no soportadas por Arrow ---------------------------
     df_transformado <- df |>
         dplyr::arrange(id_trabajador, tiempo) |>
         dplyr::mutate(
-            licencia = as.integer(
+            licencia = ifelse(
                 rem_tot_real == 0 &
                     dplyr::lag(letra) == letra &
                     dplyr::lag(id_trabajador) == id_trabajador
+                , 1
+                , 0
             ),
             # Sector base a 1 dígito
             desc_letra = dplyr::case_when(
@@ -55,8 +58,6 @@ transformar <- function(ds, cantidad = 0, debug = FALSE) {
                                   paste0("Licencia: ", desc_letra),
                                   paste0("Activo: ", desc_letra))
         ) |>
-        # dplyr::rename(desc_r32 = descripcion_sector) |>
-        # dplyr::group_by(id_trabajador, letra, r32) |>
         dplyr::add_count(name = "duracion_letra") |>
         dplyr::ungroup() |>
         dplyr::relocate(desc_letra, duracion_letra, .after = letra) |>
@@ -64,29 +65,45 @@ transformar <- function(ds, cantidad = 0, debug = FALSE) {
 
     if (debug) {
         message("edad NA: ", sum(is.na(df_transformado$edad)))
-        message("Duración procesamiento: ", Sys.time()-inicio , " segundos")
+        message("Duración procesamiento: ", difftime(Sys.time(), inicio, units = "mins"))
         }
+
 
     df_transformado
 }
 
-#ds_original_muj <- open_dataset("./materiales/MLER_mujeres_INCOMPL.parquet")
+# Cantidad_repetidas valida que no haya líneas repetidas en un dataframe dado
+cantidad_repetidas <- function(df) {
+    nrow(df) - dplyr::n_distinct(df$id_trabajador, df$tiempo)
+}
 
-# df_transformado_muj <- transformar(ds_original_muj, cantidad = 1000)
-df_transformado_muj_test <- transformar(ds_original_muj, cantidad = 0, debug = TRUE)
+# Pasos:
+#
+# 1) Cargo el dataset con las columnas del MLER pero separado por género y con algunas transformaciones básicas como conversión de rem_tot a valores reales del periodo por ejemplo
+
+ds_original_muj <- open_dataset("./materiales/MLER_mujeres_INCOMPL.parquet")
+
+# 2) Corro el script con una muestra pequeña para corroborar que no haya errores y detectarlos a tiempo, cuando lo considero aceptable lo aplico al dataset completo (tarda 12 minutos)
+# df_transformado_muj_muestra <- transformar(ds_original_muj, cantidad = 100, debug = TRUE)
+
+df_transformado_muj <- transformar(ds_original_muj, debug = TRUE)
+
+# 2.1) Verifico si se logró el objetivo comparando con la versión anterior
+
+cantidad_repetidas(df_transformado_muj) # 0
+
+# comparo con la versión anterior a este ajuste
+df_transformado_anterior <- read_parquet("./materiales/MLER_mujeres.parquet")
+cantidad_repetidas(df_transformado_anterior) # 636709
+
+# 3) Guardo el dataset transformado en un archivo parquet.
+# OJO: No eliminé las filas que  no tienen dato en la columna "edad" por las dudas que queramos incluirlas en otros cálculos.
+#
+# Mujer tiene (23 de junio 2026) 179.923 ocurrencias de NA en la columna "edad" luego de correr el script de "transformar" y Hombre tiene
+
 write_parquet(df_transformado_muj, "./materiales/MLER_mujeres.parquet")
 
+# Repito el proceso para hombres
 
-
-# df_transformado_hom <- transformar(open_dataset("./materiales/MLER_hombres_INCOMPL.parquet"))
-# write_parquet(df_transformado_hom, "./materiales/MLER_hombres.parquet")
-
-
-#       MUJERES
-#       1 edad is num           15.160.008
-#       2 edad is na               186.361
-#
-#       HOMBRES
-#       1 edad is num           33.170.777
-#       2 edad is na               618.107
-#
+df_transformado_hom <- transformar(open_dataset("./materiales/MLER_hombres_INCOMPL.parquet"))
+write_parquet(df_transformado_hom, "./materiales/MLER_hombres.parquet", debug = TRUE)
