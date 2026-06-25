@@ -26,8 +26,8 @@ reemplazar_fuera_con_pausa <- function(fila, relleno = "Fuera") { # recibe una f
 }
 crear_secuencia <- function(ds,
                             muestra = 0,
-                            edad_min = 17,
-                            edad_max = 50,
+                            edad_min = 15,
+                            edad_max = 100,
                             debug = FALSE,
                             relleno = "Fuera",
                             tipo = "edad") {
@@ -90,10 +90,13 @@ crear_secuencia <- function(ds,
         ) %>%
         arrange(id_trabajador)
 
-    matriz_estados <- as.data.frame(df_secuencias %>% select(-id_trabajador))
+    matriz_estados <- df_secuencias %>%
+        select(-id_trabajador) %>%
+        as.data.frame()
+    rownames(matriz_estados) <- as.character(df_secuencias$id_trabajador)
 
     # Reemplazar "Fuera" entre estados activos/licencia con "Pausa"
-    temp <- t(  apply(matriz_estados, 1, reemplazar_fuera_con_pausa, relleno = relleno)  )
+    temp <- t(apply(matriz_estados, 1, reemplazar_fuera_con_pausa, relleno = relleno))
     colnames(temp) <- colnames(matriz_estados)
     matriz_estados <- as.data.frame(temp)
 
@@ -102,7 +105,7 @@ crear_secuencia <- function(ds,
         alphabet = alfabeto,
         states = alfabeto,
         cpal = colores_sectores[c(1:length(alfabeto))],
-        id = df_secuencias$id_trabajador
+        id = rownames(matriz_estados)
     )
     if (debug) {
         message("Duración procesamiento: ", difftime(Sys.time(), inicio, units = "mins"))
@@ -113,8 +116,7 @@ crear_secuencia <- function(ds,
 # Pasos:
 # 1) Creo las secuencias para graficarlas luego ###
 # grabo el output en un archivo .parquet para poder consultarlo sin tener que correr todo el script cada vez.
-
-#ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
+ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
 # ds_original_muj <- open_dataset("./materiales/MLER_mujeres_20_34.parquet")
 # ds_original_muj <- open_dataset("./materiales/MLER_mujeres_18_38.parquet")
 # ds_original_muj <- open_dataset("./materiales/mler_licencias_distintas.parquet")
@@ -123,7 +125,7 @@ crear_secuencia <- function(ds,
 # write_parquet(secuencia_sectores_muj_edad, "./materiales/secuencia_sectores_edad_mujeres_18_38.parquet")
 
 secuencia_sectores_muj_tiempo <- crear_secuencia(mler_base_new , debug = TRUE, muestra = 0, tipo = "tiempo")
-write_parquet(secuencia_sectores_muj_tiempo, "./materiales/secuencia_sectores_activos_tiempo_mujeres_18_38_licencias_dintintas_prueba_fuera.parquet")
+write_parquet(secuencia_sectores_muj_tiempo, "./materiales/secuencia_sectores_activos_tiempo_mujeres_20_35_licencias_dintintas_prueba_fuera.parquet")
 
 # 1.a) Si quiero trabajar con hombres :
 # ds_original_hom <- open_dataset("./materiales/MLER_hombres.parquet")
