@@ -2,9 +2,11 @@ library(tidyverse) # incluye dplyr
 library(arrow)
 library(TraMineR)
 
+
 if(!exists("colores_MLER", mode="function")) source("./colores_MLER.r")
 colores_sectores <- colores_MLER[[1]]
 colores_favoritos <- colores_MLER[[2]]
+colores_estados <- colores_MLER[[3]]
 
 
 # Funciones:
@@ -34,7 +36,8 @@ crear_secuencia <- function(ds,
     df_sectores <- ds %>%
         select(
             id_trabajador
-            , nodo
+            #, nodo
+            , periodo
             , edad
             , tiempo
         ) %>%
@@ -48,7 +51,8 @@ crear_secuencia <- function(ds,
     df_sectores<- df_sectores%>%
         select(
             id_trabajador
-            , nodo
+            # , nodo
+            , periodo
             , {{tipo}}
         ) %>%
     distinct(id_trabajador, edad, .keep_all = TRUE)
@@ -56,7 +60,8 @@ crear_secuencia <- function(ds,
         df_sectores<- df_sectores%>%
             select(
                 id_trabajador
-                , nodo
+                # , nodo
+                , periodo
                 , {{tipo}}
             ) %>%
             distinct(id_trabajador, tiempo, .keep_all = TRUE)
@@ -71,13 +76,15 @@ crear_secuencia <- function(ds,
 
     alfabeto <- c(relleno
                   , "Pausa"
-                  , sort(unique(df_sectores$nodo), decreasing = FALSE)
+                  # , sort(unique(df_sectores$nodo), decreasing = FALSE)
+                  , sort(unique(df_sectores$periodo), decreasing = FALSE)
         )
 
     df_secuencias <- df_sectores %>%
         pivot_wider(            # tidyverse
             names_from = {{tipo}},
-            values_from = nodo,
+            # values_from = nodo,
+            values_from = periodo,
             values_fill = relleno,
             names_sort = TRUE # Mantenemos la corrección de edades
         ) %>%
@@ -108,13 +115,15 @@ crear_secuencia <- function(ds,
 # grabo el output en un archivo .parquet para poder consultarlo sin tener que correr todo el script cada vez.
 
 #ds_original_muj <- open_dataset("./materiales/MLER_mujeres.parquet")
-ds_original_muj <- open_dataset("./materiales/MLER_mujeres_20_34.parquet")
+# ds_original_muj <- open_dataset("./materiales/MLER_mujeres_20_34.parquet")
+# ds_original_muj <- open_dataset("./materiales/MLER_mujeres_18_38.parquet")
+# ds_original_muj <- open_dataset("./materiales/mler_licencias_distintas.parquet")
+#
+# secuencia_sectores_muj_edad <- crear_secuencia(ds_original_muj , muestra = 0, tipo = "edad")
+# write_parquet(secuencia_sectores_muj_edad, "./materiales/secuencia_sectores_edad_mujeres_18_38.parquet")
 
-secuencia_sectores_muj_edad <- crear_secuencia(ds_original_muj , muestra = 0, tipo = "edad")
-write_parquet(secuencia_sectores_muj_edad, "./materiales/secuencia_sectores_edad_mujeres.parquet")
-
-secuencia_sectores_muj_tiempo <- crear_secuencia(ds_original_muj , muestra = 0, tipo = "tiempo")
-write_parquet(secuencia_sectores_muj_tiempo, "./materiales/secuencia_sectores_tiempo_mujeres_20_34.parquet")
+secuencia_sectores_muj_tiempo <- crear_secuencia(mler_base_new , debug = TRUE, muestra = 0, tipo = "tiempo")
+write_parquet(secuencia_sectores_muj_tiempo, "./materiales/secuencia_sectores_activos_tiempo_mujeres_18_38_licencias_dintintas_prueba_fuera.parquet")
 
 # 1.a) Si quiero trabajar con hombres :
 # ds_original_hom <- open_dataset("./materiales/MLER_hombres.parquet")

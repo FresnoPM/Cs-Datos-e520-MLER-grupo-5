@@ -84,6 +84,17 @@ cantidad_repetidas <- function(df) {
     nrow(df) - dplyr::n_distinct(df$id_trabajador, df$tiempo)
 }
 
+
+
+reducir_db_por_edad <- function(db, edad_min = 15, edad_max = 85) {
+    df <- as.data.frame(db)
+    df <- df |> filter(edad >= edad_min & edad <= edad_max)
+    return(df)
+}
+
+
+
+
 # Pasos:
 #
 # 1) Cargo el dataset con las columnas del MLER pero separado por género y con algunas transformaciones básicas como conversión de rem_tot a valores reales del periodo por ejemplo
