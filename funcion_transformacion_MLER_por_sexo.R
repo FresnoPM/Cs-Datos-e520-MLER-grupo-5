@@ -79,6 +79,10 @@ transformar <- function(ds, cantidad = 0, debug = FALSE) {
     df_transformado
 }
 
+
+
+
+
 # Cantidad_repetidas valida que no haya líneas repetidas en un dataframe dado
 cantidad_repetidas <- function(df) {
     nrow(df) - dplyr::n_distinct(df$id_trabajador, df$tiempo)
@@ -102,7 +106,7 @@ reducir_db_por_edad <- function(db, edad_min = 15, edad_max = 85) {
 ds_original_muj <- open_dataset("./materiales/MLER_mujeres_INCOMPL.parquet")
 
 # 2) Corro el script con una muestra pequeña para corroborar que no haya errores y detectarlos a tiempo, cuando lo considero aceptable lo aplico al dataset completo (tarda 12 minutos)
-df_transformado_muj_muestra <- transformar(ds_original_muj, cantidad = 100, debug = TRUE)
+# df_transformado_muj_muestra <- transformar(ds_original_muj, cantidad = 100, debug = TRUE)
 
 # df_transformado_muj <- transformar(ds_original_muj, debug = TRUE)
 

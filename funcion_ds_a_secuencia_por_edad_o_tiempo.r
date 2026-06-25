@@ -113,6 +113,8 @@ crear_secuencia <- function(ds,
     return(secuencia_sectores)
 
 }
+
+
 # Pasos:
 # 1) Creo las secuencias para graficarlas luego ###
 # grabo el output en un archivo .parquet para poder consultarlo sin tener que correr todo el script cada vez.
