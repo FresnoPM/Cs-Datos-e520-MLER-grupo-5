@@ -44,10 +44,16 @@ colores_MLER <- list(
 
     ),
     estados <- c(
-        "#1d1d1d",        # "Fuera" default
-        "#55223d",        # "Pausa"
+
+
+
+        "#1d1d1d", # "Fuera" default
+        "#55223d", # "Pausa"
         "#c9c9c9", # for Missing,
         "#0B476B", # for Estable,
+
+
+
         "#5EA122", # for lic_larga and lic_corta ,
         "#eb1803", # for maternidad and ultima_maternidad,
         "#0f0758" # for maternidad_ignorada
